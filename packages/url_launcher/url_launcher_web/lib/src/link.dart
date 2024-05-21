@@ -164,6 +164,7 @@ class LinkTriggerSignals {
   }
 
   void registerFollowLink({required int viewId}) {
+    print('registerFollowLink: $viewId');
     _hasFollowLink = true;
     _viewIdFromFollowLink = viewId;
     _didUpdate();
@@ -173,6 +174,7 @@ class LinkTriggerSignals {
     required int? viewId,
     required html.MouseEvent? mouseEvent,
   }) {
+    print('registerDomEvent: $viewId, $mouseEvent');
     if (mouseEvent != null && viewId == null) {
       throw AssertionError('`viewId` must be provided for mouse events');
     }
@@ -205,12 +207,14 @@ class LinkTriggerSignals {
   Timer? _resetTimer;
 
   void _didUpdate() {
+    print('rescheduling reset...');
     _resetTimer?.cancel();
     _resetTimer = Timer(staleTimeout, reset);
   }
 
   /// Reset all signals to their initial state.
   void reset() {
+    print('RESET!');
     _resetTimer?.cancel();
     _resetTimer = null;
 
@@ -463,6 +467,7 @@ class LinkViewController extends PlatformViewController {
   /// vs keyboard event.
   static void _triggerLink() {
     assert(_triggerSignals.isReadyToTrigger);
+    print('TRIGGER!');
 
     final LinkViewController controller = _instancesByViewId[_triggerSignals.viewId!]!;
     final html.MouseEvent? mouseEvent = _triggerSignals.mouseEvent;
@@ -471,11 +476,14 @@ class LinkViewController extends PlatformViewController {
     _triggerSignals.reset();
 
     if (mouseEvent != null && _isModifierKey(mouseEvent)) {
+      print('modifier present.. letting browser handle it.');
       return;
     }
 
     if (controller._isExternalLink) {
+      print('external: ${mouseEvent != null ? 'mouse' : 'keyboard'}');
       if (mouseEvent == null) {
+        print('launching url...');
         // When external links are trigger by keyboard, they are not handled by
         // the browser. So we have to launch the url manually.
         UrlLauncherPlatform.instance
@@ -492,6 +500,7 @@ class LinkViewController extends PlatformViewController {
     // browser handle it.
     mouseEvent?.preventDefault();
     final String routeName = controller._uri.toString();
+    print('internal: $routeName');
     pushRouteToFrameworkFunction(routeName);
   }
 
@@ -542,6 +551,7 @@ class LinkViewController extends PlatformViewController {
         // TODO: Find out the view ID of semantic link.
         final String? semanticIdentifier = semanticLink.getAttribute('semantic-identifier');
         if (semanticIdentifier != null) {
+          print('semanticIdentifier: $semanticIdentifier');
           return _instancesBySemanticIdentifier[semanticIdentifier]?.viewId;
         }
       }
